@@ -1,0 +1,120 @@
+<ons-page>
+  <ons-toolbar>
+    <div class="center" id="form-title">チャット</div>
+    <div class="right">
+      <ons-toolbar-button id="showUser">
+        <ons-icon
+          icon="md-face"
+          size="25px">
+        </ons-icon>
+      </ons-toolbar-button>
+    </div>
+  </ons-toolbar>
+  <div class="content">
+    <ons-list id="chats">
+    </ons-list>
+  </div>
+  <div class="send-area">
+    <ons-input id="message" placeholder="メッセージ"></ons-input>
+    <ons-button id="send" modifier="quiet">送信</ons-button>
+  </div>
+  <script>
+    ons.getScriptPage().onInit = async function() {
+      // メッセージ送信
+      $('#send').on('click', e => {
+        const message = $('#message').val();
+        if (message.trim() === '') return true;
+        chat.send('chat', message);
+        $('#message').val('')
+        saveToNCMB(message);
+      });
+
+      // ユーザ一覧画面への遷移
+      $('#showUser').on('click', e => {
+        $('#nav')[0].pushPage('users.html');
+      });
+
+      // 新しいメッセージが届いた時の処理
+      chat.message = function(action, user, message) {
+        writeChat(user, message);
+      }
+
+      const user = ncmb.User.getCurrentUser();
+      if (!user) {
+        // 未ログインの場合
+        return $('#nav')[0].pushPage('login.html');
+      }
+      try {
+        // セッションの有効性を確認
+        ncmb.DataStore('Tset').fetch();
+        chat.send('login', null);
+      } catch (e) {
+        // セッションが無効な場合エラーになるので、その場合はlocalStorageの認証データを削除
+        localStorage.removeItem(`NCMB/${ncmb.apiKey}/currentUser`);
+        ncmb.sessionToken = null;
+        $('#nav')[0].pushPage('login.html');
+      }
+    }
+
+    ons.getScriptPage().onShow = async function() {
+      $('#chats').empty();
+      const chats = []; // エラーが出ないようにするため。実装時に削除してください。
+      for (const chat of chats) {
+        writeChat(chat.get('user'), chat.get('message'));
+      }
+    }
+
+    async function saveToNCMB(message) {
+    }
+
+    function writeChat(name, message) {
+      const user = ncmb.User.getCurrentUser();
+      let html = '';
+      if (user.get('displayName') === name) {
+        // 自分のメッセージ
+        html = `
+        <ons-list-item modifier="nodivider">
+          <div class="right">
+            <ons-button style="background-color: green">${message}</ons-button>
+          </div>
+        </ons-list-item>
+        `;
+      } else {
+        html = `
+        <ons-list-item modifier="nodivider">
+          <ons-button>${message}</ons-button>
+          <span class="list-item__subtitle">${name}</span>
+        </ons-list-item>
+        `;
+      }
+      $('#chats').append(html);
+    }
+  </script>
+  <style>
+    .content {
+      text-align: center;
+      padding-bottom: 4em;
+    }
+    .send-area {
+      padding: 0 5px;
+      box-sizing: border-box;
+      line-height: 49px;
+      position: fixed;
+      bottom: 0px;
+      width: 100%;
+      border-top: solid 1px #ccc;
+    }
+    
+    .send-area ons-input {
+        display: inline-block;
+        position: relative;
+        width: calc(100% - 60px);
+    }
+    
+    .send-area input {
+        vertical-align: middle;
+      position: relative;
+      width: 98%;
+    }
+  </style>
+</ons-page>

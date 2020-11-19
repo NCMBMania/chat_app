@@ -1,0 +1,56 @@
+<ons-page>
+  <ons-toolbar>
+    <div class="center" id="form-title">新規登録/ログイン</div>
+  </ons-toolbar>
+  <div style="text-align: center; margin-top: 60px;">
+    <p>
+      <ons-input id="displayName" modifier="underbar" placeholder="お名前" float></ons-input>
+    </p>
+    <p>
+      <ons-input id="userName" modifier="underbar" placeholder="ユーザ名" float></ons-input>
+    </p>
+    <p>
+      <ons-input id="password" modifier="underbar" type="password" placeholder="パスワード" float></ons-input>
+    </p>
+    <p style="margin-top: 30px;">
+      <ons-button id="login">登録/ログイン</ons-button>
+    </p>
+  </div>
+
+  <script>
+    ons.getScriptPage().onInit = function() {
+      // ログインボタンを押した時の処理です
+      $('#login').on('click', async e => {
+        const userName = $('#userName').val();
+        const password = $('#password').val();
+        const displayName = $('#displayName').val();
+
+        // すでに登録済みの場合はエラーになるので、try/catchでエラーを潰します
+        try {
+          await registerUser(displayName, userName, password);
+        } catch (e) {
+        }
+        try {
+          // ログイン処理です。
+          await loginUser(userName, password);
+          // ログインをWebSocketで通知します
+          chat.send('login', null);
+          // ログインできたら日報入力画面に遷移します
+          $('#formNav')[0].pushPage('form.html');
+        } catch (e) {
+          // エラーの場合ID/パスワード不一致になります
+          ons.notification.alert('ログイン失敗しました。ユーザ名、パスワードを確認してください');
+          return false;
+        }
+      });
+    }
+
+    // 新規ユーザ登録処理です
+    async function registerUser(displayName, userName, password) {
+    }
+
+    // ユーザログイン処理です
+    async function loginUser(userName, password) {
+    }
+  </script>
+</ons-page>
